@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: protopie
+  r2dbc:
+    url: ${POSTGRE_URL:r2dbc:postgresql://localhost:5432/postgres}
+    username: ${POSTGRE_USERNAME:postgres}
+    password: ${POSTGRE_PASSWORD:password}
+
+
+app:
+  jwt:
+    secret: mySecretKey123456789012345678901234567890
+    expiration: 86400000 # 24 Hours
+  postgre:
+    aes-key: ProtopieAESKeyForPostgreSQL12345
