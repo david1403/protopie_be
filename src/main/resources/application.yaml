@@ -5,6 +5,11 @@ spring:
     url: ${POSTGRE_URL:r2dbc:postgresql://localhost:5432/postgres}
     username: ${POSTGRE_USERNAME:postgres}
     password: ${POSTGRE_PASSWORD:password}
+  kafka:
+    bootstrap-servers: ${BOOTSTRAP_SERVER:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 
 app:

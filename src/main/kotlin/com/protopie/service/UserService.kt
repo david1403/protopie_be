@@ -7,6 +7,7 @@ import com.protopie.controller.dto.UserRegistrationRequest
 import com.protopie.controller.dto.UserResponse
 import com.protopie.dto.exception.DuplicateEmailException
 import com.protopie.dto.exception.LoginFailureException
+import com.protopie.dto.exception.UserNotFoundException
 import com.protopie.entity.User
 import com.protopie.repository.UserRepository
 import kotlinx.coroutines.flow.toList
@@ -14,13 +15,16 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordConverter: PasswordConverter,
+    private val withdrawMessageService: WithdrawMessageService,
 ) {
+    @Transactional
     suspend fun register(userRegistrationRequest: UserRegistrationRequest): User {
         checkDuplicateEmail(userRegistrationRequest.email)
 
@@ -34,6 +38,7 @@ class UserService(
         )
     }
 
+    @Transactional
     suspend fun login(userLoginDto: LoginRequest): LoginResponse {
         val user = userRepository.findByEmail(
             email = userLoginDto.email,
@@ -43,11 +48,14 @@ class UserService(
         return LoginResponse(userResponse = UserResponse.convertFromEntity(user), jwtToken = token)
     }
 
+    @Transactional
     suspend fun deleteUserById(userId: Long) {
         val user = getUserByIdOrThrow(userId)
         userRepository.delete(user)
+        withdrawMessageService.sendWithdrawMessage(userId)
     }
 
+    @Transactional
     suspend fun modifyUser(userId: Long, userModificationRequest: UserModificationRequest): User {
         val user = getUserByIdOrThrow(userId)
         var updatedUser = user
@@ -58,7 +66,7 @@ class UserService(
     }
 
     suspend fun getUserByIdOrThrow(userId: Long): User {
-        return userRepository.findById(userId) ?: throw IllegalArgumentException("user not found by id: $userId")
+        return userRepository.findById(userId) ?: throw UserNotFoundException("user not found by id: $userId")
     }
 
     suspend fun findAllWithPagination(pageable: Pageable): Page<UserResponse> {
